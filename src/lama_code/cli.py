@@ -48,7 +48,7 @@ def main() -> None:
         ),
     )
 
-    # Model selection menu — only in REPL mode and only if --model was not passed
+    # Model + yolo menus — only in REPL mode and only if --model was not passed
     if not args.prompt and args.model is None:
         models = list_models(cfg.ollama_url)
         if len(models) > 1:
@@ -56,6 +56,7 @@ def main() -> None:
             if chosen != cfg.model:
                 cfg.model = chosen
                 ollama.model = chosen
+        cfg.yolo = _display.select_yolo(current=True)
 
     if args.prompt:
         try:
