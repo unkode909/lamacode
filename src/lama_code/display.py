@@ -62,19 +62,20 @@ def select_model(models: list[str], current: str) -> str:
 
 
 def select_yolo(current: bool) -> bool:
-    """Ask user to choose yolo mode. Default is True (yolo on)."""
+    """Ask user to choose yolo mode. Interactive Enter defaults to yolo on."""
     console.print("\n[bold]Mode d'exécution :[/bold]")
-    options = [("Yolo", True), ("Confirmer chaque commande", False)]
+    options = [("Yolo (sans confirmation)", True), ("Confirmer chaque commande", False)]
     for i, (label, val) in enumerate(options, 1):
         marker = "[cyan]▶[/cyan] " if val == current else "  "
         console.print(f"  {marker}[bold]{i}[/bold]. {label}")
     try:
         raw = input("Choisir [1-2] (Entrée = yolo) : ").strip()
     except (KeyboardInterrupt, EOFError):
-        return True
+        # Non-interactive context — keep the configured value, don't force yolo
+        return current
     if raw == "2":
         return False
-    return True
+    return True  # "1", empty, or anything else → yolo
 
 
 def print_header(model: str, context_window: int, yolo: bool, lama_md_status: str) -> None:

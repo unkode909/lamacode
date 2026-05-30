@@ -56,7 +56,9 @@ def main() -> None:
             if chosen != cfg.model:
                 cfg.model = chosen
                 ollama.model = chosen
-        cfg.yolo = _display.select_yolo(current=True)
+        # Skip yolo menu if --yolo was explicitly passed as flag
+        if not args.yolo:
+            cfg.yolo = _display.select_yolo(current=cfg.yolo)
 
     if args.prompt:
         try:
