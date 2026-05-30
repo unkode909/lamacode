@@ -24,16 +24,18 @@ class OllamaClient:
             url, data=payload, headers={"Content-Type": "application/json"}
         )
         try:
-            with urllib.request.urlopen(req) as resp:
-                for line in resp:
-                    if not line:
-                        continue
-                    chunk = json.loads(line)
-                    if token := chunk.get("message", {}).get("content", ""):
-                        yield token
-                    if chunk.get("done"):
-                        break
+            resp = urllib.request.urlopen(req, timeout=30)
         except urllib.error.URLError as e:
             raise OllamaError(
                 f"Impossible de joindre Ollama sur {self.base_url}: {e}"
             ) from e
+
+        with resp:
+            for line in resp:
+                if not line:
+                    continue
+                chunk = json.loads(line)
+                if token := chunk.get("message", {}).get("content", ""):
+                    yield token
+                if chunk.get("done"):
+                    break
