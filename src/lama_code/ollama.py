@@ -28,13 +28,21 @@ class OllamaClient:
     # Special prefix used to distinguish thinking tokens from content tokens
     THINK_PREFIX = "\x00think\x00"
 
+    # Models that support chain-of-thought thinking
+    _THINKING_MODELS = ("deepseek-r1", "deepseek-r2", "qwq", "phi4-reasoning")
+
+    def _supports_thinking(self) -> bool:
+        return any(name in self.model.lower() for name in self._THINKING_MODELS)
+
     def generate(self, messages: list[dict], stats: dict | None = None) -> Iterator[str]:
-        payload = json.dumps({
+        payload_dict = {
             "model": self.model,
             "messages": messages,
             "stream": True,
-            "think": True,
-        }).encode()
+        }
+        if self._supports_thinking():
+            payload_dict["think"] = True
+        payload = json.dumps(payload_dict).encode()
 
         parsed = urllib.parse.urlparse(f"{self.base_url}/api/chat")
         try:
