@@ -27,8 +27,20 @@ class Message:
     content: str
 
 
+_BASH_INVALID_RE = re.compile(
+    r"^(your|this|the|to |i |you |please|note|here|use |run |it |as |if |we |they |for |in )",
+    re.IGNORECASE,
+)
+
+
 def parse_bash_blocks(text: str) -> list[str]:
-    return [m.group(1).strip() for m in BASH_BLOCK_RE.finditer(text)]
+    blocks = []
+    for m in BASH_BLOCK_RE.finditer(text):
+        cmd = m.group(1).strip()
+        # Skip blocks that are actually prose disguised as bash
+        if cmd and not _BASH_INVALID_RE.match(cmd):
+            blocks.append(cmd)
+    return blocks
 
 
 def parse_memory_blocks(text: str) -> list[str]:
