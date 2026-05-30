@@ -88,6 +88,7 @@ class Agent:
             if not self.cfg.yolo and not self.display.confirm():
                 parts.append(f"$ {cmd}\n[ignoré par l'utilisateur]")
                 continue
+            self.display.show_command_running(cmd)
             result = self.execute_fn(
                 cmd,
                 on_stdout=self.display.stream_stdout_line,

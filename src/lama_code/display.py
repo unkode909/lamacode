@@ -110,6 +110,10 @@ def end_stream() -> None:
     print()
 
 
+def show_command_running(command: str) -> None:
+    console.print(f"[green]$ {command}[/green]")
+
+
 def stream_stdout_line(line: str) -> None:
     sys.stdout.write(line)
     sys.stdout.flush()
