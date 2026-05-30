@@ -16,23 +16,35 @@ def _discover_ollama_url() -> str:
             host = f"http://{host}"
         return host.rstrip("/")
 
-    # 2. Auto-découverte via ss (port que le processus ollama écoute réellement)
+    # 2. Sonde HTTP — essaie les ports candidates dans l'ordre
+    import urllib.request as _req
+
+    candidates = [DEFAULT_OLLAMA_URL]
+
+    # Cherche d'autres ports via ss
     try:
         out = subprocess.run(
-            ["ss", "-tlnp"],
-            capture_output=True, text=True, timeout=2
+            ["ss", "-tlnp"], capture_output=True, text=True, timeout=2
         ).stdout
         for line in out.splitlines():
-            if "ollama" in line:
-                # format: LISTEN 0 128 *:11434 ...
-                parts = line.split()
-                for part in parts:
-                    if ":" in part:
-                        port = part.rsplit(":", 1)[-1]
-                        if port.isdigit():
-                            return f"http://localhost:{port}"
+            if "ollama" not in line:
+                continue
+            for part in line.split():
+                if ":" in part:
+                    port = part.rsplit(":", 1)[-1]
+                    if port.isdigit():
+                        url = f"http://localhost:{port}"
+                        if url not in candidates:
+                            candidates.append(url)
     except Exception:
         pass
+
+    for url in candidates:
+        try:
+            _req.urlopen(f"{url}/api/tags", timeout=2).close()
+            return url
+        except Exception:
+            continue
 
     return DEFAULT_OLLAMA_URL
 
