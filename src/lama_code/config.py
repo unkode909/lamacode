@@ -64,6 +64,7 @@ class Config:
 def load_config(
     home_dir: Path = None,
     project_dir: Path = None,
+    system_lama: Path = Path("/etc/lama.md"),
     yolo_override: bool = False,
     model_override: str = None,
 ) -> Config:
@@ -74,7 +75,7 @@ def load_config(
     bodies: list[str] = []
 
     seen: set = set()
-    for path in [Path("/etc/lama.md"), home_dir / ".lama.md", project_dir / ".lama.md"]:
+    for path in [system_lama, home_dir / ".lama.md", project_dir / ".lama.md"]:
         resolved = path.resolve()
         if resolved in seen:
             continue
