@@ -1,5 +1,6 @@
 from rich.console import Console
 from rich.panel import Panel
+from lama_code import __version__
 from lama_code.executor import ExecutionResult
 
 console = Console()
@@ -8,7 +9,7 @@ console = Console()
 def print_header(model: str, context_window: int, yolo: bool, lama_md_status: str) -> None:
     yolo_str = "[red]oui[/red]" if yolo else "[green]non[/green]"
     console.print(
-        f"[bold]lama-code v0.1.0[/bold]  |  modèle: [cyan]{model}[/cyan]  |  "
+        f"[bold]lama-code v{__version__}[/bold]  |  modèle: [cyan]{model}[/cyan]  |  "
         f"yolo: {yolo_str}  |  contexte: [dim]{context_window} échanges[/dim]  |  "
         f"lama.md: [dim]{lama_md_status}[/dim]"
     )
