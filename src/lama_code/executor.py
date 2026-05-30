@@ -16,7 +16,7 @@ class ExecutionResult:
 
 def execute(command: str) -> ExecutionResult:
     result = subprocess.run(
-        command, shell=True, capture_output=True, text=True
+        command, shell=True, capture_output=True, text=True, timeout=60
     )
     return ExecutionResult(
         command=command,
