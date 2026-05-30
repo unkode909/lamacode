@@ -106,9 +106,9 @@ class Agent:
         window = self.history[-(self.cfg.context_window * 2):]
         messages += [{"role": m.role, "content": m.content} for m in window]
         messages += [
-            {"role": "user", "content": "show hostname"},
-            {"role": "assistant", "content": "```bash\nhostname\n```"},
-            {"role": "user", "content": "[Results]\nsrvcore"},
+            {"role": "user", "content": "list users on this system"},
+            {"role": "assistant", "content": "```bash\ngetent passwd | awk -F: '$3>=1000 {print $1}'\n```"},
+            {"role": "user", "content": "[Results]\nuser\nexchange"},
         ]
         return messages
 
