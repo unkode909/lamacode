@@ -98,8 +98,6 @@ class Agent:
 
     def _build_messages(self) -> list[dict]:
         system = TOOL_INSTRUCTIONS
-        if self._memory:
-            system = f"[Persistent memory]\n{self._memory}\n\n" + system
         if self.cfg.system_prompt:
             system = self.cfg.system_prompt + "\n\n" + system
         messages = [{"role": "system", "content": system}]
