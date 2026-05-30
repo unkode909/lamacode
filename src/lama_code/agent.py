@@ -33,7 +33,7 @@ AT THE END, WHEN GOAL OR ANSWER TO THE PROMPT IS OBTAINED, ANSWER WITH A SHORT P
 
 Rules:
 1. Use the correct standard Linux command. Do not invent flags or files that don't exist.
-2. If you need a value you don't know (IP, path, username), run a command first to discover it.
+2. NEVER presume a value (IP, variables, sysinfo, etc) if can't know run a command first to discover it.
 3. After seeing results, give a one-line factual answer if needed. Nothing more."""
 
 
@@ -44,7 +44,7 @@ class Message:
 
 
 _BASH_INVALID_RE = re.compile(
-    r"^(your|this|the|to |i |you |please|note|here|use |run |it |as |if |we |they |for |in )",
+    r"^(your |this command|the command|to install|to find|to check|i will|you can|please |note:|here is|use the|run the)",
     re.IGNORECASE,
 )
 
