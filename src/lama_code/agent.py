@@ -1,5 +1,5 @@
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable
 from lama_code.config import Config
 from lama_code.executor import ExecutionResult

@@ -68,3 +68,58 @@ def test_history_grows():
     agent = _make_agent([["Réponse."]])
     agent.run("Question")
     assert len(agent.history) == 2
+
+
+def test_confirm_skips_block_when_denied():
+    """Verifies the non-yolo confirm path."""
+    cfg = Config(yolo=False, max_cycles=5, context_window=25)
+    ollama = MagicMock()
+    ollama.generate.return_value = iter(["Réponse finale."])
+    display = MagicMock()
+    display.confirm.return_value = False  # user denies
+
+    # First call: bash block; second call (after denied result): text only
+    responses = [
+        ["```bash\necho hi\n```"],
+        ["La commande a été ignorée."],
+    ]
+    call_count = [0]
+    def generate(messages):
+        idx = call_count[0]
+        call_count[0] += 1
+        return iter(responses[idx] if idx < len(responses) else ["Terminé."])
+    ollama.generate.side_effect = generate
+
+    def fake_execute(cmd):
+        return ExecutionResult(command=cmd, stdout="output", stderr="", exit_code=0)
+
+    agent = Agent(cfg=cfg, ollama=ollama, display=display, execute_fn=fake_execute)
+    result = agent.run("dis hi")
+
+    # confirm was called, execute was NOT called (block skipped)
+    display.confirm.assert_called_once()
+    fake_execute_mock = MagicMock()  # just verifying execute_fn wasn't called via result content
+    assert "[ignoré par l'utilisateur]" in agent.history[2].content
+
+
+def test_build_messages_includes_system_prompt():
+    """Verifies user system_prompt is prepended before TOOL_INSTRUCTIONS."""
+    from lama_code.agent import TOOL_INSTRUCTIONS
+    cfg = Config(system_prompt="Sois concis.", max_cycles=5, context_window=25)
+    ollama = MagicMock()
+    ollama.generate.return_value = iter(["ok"])
+    display = MagicMock()
+    display.confirm.return_value = True
+
+    agent = Agent(cfg=cfg, ollama=ollama, display=display,
+                  execute_fn=lambda cmd: ExecutionResult(cmd, "", "", 0))
+    agent.run("test")
+
+    # First message sent to ollama should be the system message
+    call_args = ollama.generate.call_args[0][0]
+    system_msg = call_args[0]
+    assert system_msg["role"] == "system"
+    assert "Sois concis." in system_msg["content"]
+    assert TOOL_INSTRUCTIONS in system_msg["content"]
+    # System prompt comes before TOOL_INSTRUCTIONS
+    assert system_msg["content"].index("Sois concis.") < system_msg["content"].index(TOOL_INSTRUCTIONS)
