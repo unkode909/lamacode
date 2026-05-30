@@ -1,0 +1,9 @@
+pyproject.toml
+src/lama_code/__init__.py
+src/lama_code/__main__.py
+src/lama_code.egg-info/PKG-INFO
+src/lama_code.egg-info/SOURCES.txt
+src/lama_code.egg-info/dependency_links.txt
+src/lama_code.egg-info/entry_points.txt
+src/lama_code.egg-info/requires.txt
+src/lama_code.egg-info/top_level.txt
