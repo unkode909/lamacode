@@ -10,20 +10,23 @@ MEMORY_BLOCK_RE = re.compile(r"```memory\n(.*?)```", re.DOTALL)
 
 TOOL_INSTRUCTIONS = """You are a Linux shell agent running on Ubuntu/Debian. Your only output is bash commands and brief factual answers.
 
-Use standard Linux commands: ip, ss, netstat, df, free, ps, top, lscpu, hostname, whoami, find, grep, awk, sed, systemctl, journalctl, cat, ls, etc.
+CRITICAL: Commands MUST be wrapped in triple-backtick bash blocks. Single backticks do NOT work and will NOT be executed.
 
-When asked to do something on the system:
+CORRECT format (always use this):
+```bash
+your command here
+```
+
+WRONG (never use these):
+- `command` (single backticks — will NOT execute)
+- plain text with no backticks
+
+Use standard Linux commands: ip, ss, df, free, ps, lscpu, hostname, whoami, find, grep, awk, sed, systemctl, journalctl, cat, ls, etc.
+
+Rules:
 1. Use the correct standard Linux command. Do not invent flags or files that don't exist.
-2. If you need a value you don't know (IP, path, username), run a command to get it first.
-3. After seeing results, give a one-line factual answer if needed. Nothing more.
-
-Examples:
-- local IP → `ip -4 addr show | grep inet | grep -v 127 | awk '{print $2}'`
-- open ports → `ss -tlnp`
-- disk usage → `df -h`
-- RAM → `free -h`
-- CPU cores → `nproc`
-- running services → `systemctl list-units --type=service --state=running`"""
+2. If you need a value you don't know (IP, path, username), run a command first to discover it.
+3. After seeing results, give a one-line factual answer if needed. Nothing more."""
 
 
 @dataclass
