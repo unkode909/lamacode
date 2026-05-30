@@ -25,7 +25,7 @@ class OllamaClient:
         self.base_url = base_url.rstrip("/")
         self.model = model
 
-    def generate(self, messages: list[dict]) -> Iterator[str]:
+    def generate(self, messages: list[dict], stats: dict | None = None) -> Iterator[str]:
         payload = json.dumps({
             "model": self.model,
             "messages": messages,
@@ -59,6 +59,9 @@ class OllamaClient:
                 if token := chunk.get("message", {}).get("content", ""):
                     yield token
                 if chunk.get("done"):
+                    if stats is not None:
+                        stats["prompt_tokens"] = chunk.get("prompt_eval_count", 0)
+                        stats["generated_tokens"] = chunk.get("eval_count", 0)
                     break
         except (OSError, ConnectionResetError) as e:
             raise OllamaError(f"Ollama a fermé la connexion: {e}") from e

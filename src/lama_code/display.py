@@ -179,3 +179,17 @@ def show_result(result: ExecutionResult) -> None:
 
 def print_error(message: str) -> None:
     console.print(f"[bold red]Erreur :[/bold red] {message}")
+
+
+def show_max_cycles_reached(max_cycles: int) -> None:
+    console.print(f"\n[yellow]⚠ Max cycles atteint ({max_cycles}) — la tâche est peut-être trop complexe ou nécessite plus d'étapes.[/yellow]")
+
+
+def show_token_stats(prompt_tokens: int, generated_tokens: int, context_window: int) -> None:
+    if not prompt_tokens and not generated_tokens:
+        return
+    pct = int(prompt_tokens / max(context_window * 800, 1) * 100)
+    console.print(
+        f"[dim]  ↳ {generated_tokens} tokens générés | "
+        f"contexte: {prompt_tokens} tokens (~{pct}% de la fenêtre)[/dim]"
+    )

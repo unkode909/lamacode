@@ -27,7 +27,7 @@ def _make_agent(responses, yolo=True):
     ollama = MagicMock()
     call_count = [0]
 
-    def generate(messages):
+    def generate(messages, stats=None):
         idx = call_count[0]
         call_count[0] += 1
         tokens = responses[idx] if idx < len(responses) else ["Terminé."]
@@ -84,7 +84,7 @@ def test_confirm_skips_block_when_denied():
         ["La commande a été ignorée."],
     ]
     call_count = [0]
-    def generate(messages):
+    def generate(messages, stats=None):
         idx = call_count[0]
         call_count[0] += 1
         return iter(responses[idx] if idx < len(responses) else ["Terminé."])
@@ -106,7 +106,7 @@ def test_build_messages_includes_system_prompt():
     from lama_code.agent import TOOL_INSTRUCTIONS
     cfg = Config(system_prompt="Sois concis.", max_cycles=5, context_window=25)
     ollama = MagicMock()
-    ollama.generate.return_value = iter(["ok"])
+    ollama.generate.side_effect = lambda messages, stats=None: iter(["ok"])
     display = MagicMock()
     display.confirm.return_value = True
 
@@ -132,7 +132,7 @@ def test_format_result_truncated():
         ["ok"],
     ]
     call_count = [0]
-    def generate(messages):
+    def generate(messages, stats=None):
         idx = call_count[0]
         call_count[0] += 1
         return iter(responses[idx] if idx < len(responses) else ["ok"])
@@ -169,7 +169,7 @@ def test_stdin_needed_ai_responds():
         ["Réponse finale."],
     ]
     call_count = [0]
-    def generate(messages):
+    def generate(messages, stats=None):
         idx = call_count[0]
         call_count[0] += 1
         return iter(responses[idx] if idx < len(responses) else ["ok"])
