@@ -70,6 +70,11 @@ class Agent:
         messages = [{"role": "system", "content": system}]
         window = self.history[-(self.cfg.context_window * 2):]
         messages += [{"role": m.role, "content": m.content} for m in window]
+        # Inject a last-second reminder before every query — effective with small models
+        messages += [
+            {"role": "user", "content": "RAPPEL STRICT: zéro explication, zéro introduction. Commandes bash uniquement."},
+            {"role": "assistant", "content": "Compris. J'agis directement."},
+        ]
         return messages
 
     def _stream(self, messages: list[dict]) -> str:
