@@ -87,6 +87,19 @@ def show_stdin_waiting() -> None:
     console.print("[dim]⌨  commande en attente d'entrée...[/dim]")
 
 
+def show_stdin_proposed(value: str) -> None:
+    console.print("[dim]L'IA propose d'envoyer :[/dim]")
+    console.print(Panel(value.rstrip(), title="[cyan]stdin proposé[/cyan]", border_style="yellow", expand=False))
+
+
+def confirm_stdin() -> bool:
+    try:
+        answer = input("  Envoyer ? [o/N] ").strip().lower()
+        return answer in ("o", "oui", "y", "yes")
+    except EOFError:
+        return False
+
+
 def show_truncation(lines_shown: int, total_lines: int, filepath: str) -> None:
     console.print(
         f"[dim]... {total_lines - lines_shown} lignes supplémentaires "

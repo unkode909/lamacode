@@ -56,17 +56,31 @@ def execute_streaming(
     all_lines: list[str] = []
     last_line_time: list[float] = [time.time()]
     lock = threading.Lock()
+    # Temp file created lazily — only written if truncation occurs
+    _tmp_path: list[str] = [""]
+    _tmp_file: list[object] = [None]
 
-    tmp = tempfile.NamedTemporaryFile(
-        mode="w", prefix="lama-", suffix=".txt", delete=False
-    )
+    def _get_tmp():
+        if _tmp_file[0] is None:
+            f = tempfile.NamedTemporaryFile(
+                mode="w", prefix="lama-", suffix=".txt", delete=False
+            )
+            _tmp_file[0] = f
+            _tmp_path[0] = f.name
+        return _tmp_file[0]
 
     def record(line: str, kind: str) -> None:
         with lock:
-            tmp.write(line)
-            tmp.flush()
             all_lines.append(line)
             last_line_time[0] = time.time()
+            # Only write to disk if we're approaching the truncation limit
+            if len(all_lines) >= max_output_lines:
+                try:
+                    f = _get_tmp()
+                    f.write(line)
+                    f.flush()
+                except Exception:
+                    pass
         if kind == "out":
             stdout_lines.append(line)
         else:
@@ -82,10 +96,8 @@ def execute_streaming(
             text=True,
         )
     except Exception as e:
-        tmp.close()
         return ExecutionResult(
             command=command, stdout="", stderr=str(e), exit_code=1,
-            output_file=tmp.name,
         )
 
     def read_stream(stream, kind: str, cb: Callable[[str], None]) -> None:
@@ -140,33 +152,50 @@ def execute_streaming(
     except Exception:
         pass
 
-    tmp.close()
+    if _tmp_file[0] is not None:
+        try:
+            _tmp_file[0].close()
+        except Exception:
+            pass
+
     exit_code = proc.returncode if proc.returncode is not None else 1
-    total = len(all_lines)
     total_stdout = len(stdout_lines)
 
     if total_stdout > max_output_lines:
+        # Write all lines to temp file if not already done
+        if _tmp_file[0] is None:
+            f = _get_tmp()
+            for line in all_lines:
+                f.write(line)
+            f.flush()
+            f.close()
         kept = "".join(stdout_lines[:max_output_lines])
         extra = total_stdout - max_output_lines
         truncated_msg = (
-            f"[... {extra} lignes supplémentaires — voir {tmp.name}]"
+            f"[... {extra} lignes supplémentaires — voir {_tmp_path[0]}]"
         )
         return ExecutionResult(
             command=command,
             stdout=kept + truncated_msg,
             stderr="".join(stderr_lines),
             exit_code=exit_code,
-            output_file=tmp.name,
+            output_file=_tmp_path[0],
             truncated=True,
             total_lines=total_stdout,
         )
+
+    # No truncation — delete temp file if created, don't expose path to AI
+    if _tmp_path[0]:
+        try:
+            os.unlink(_tmp_path[0])
+        except Exception:
+            pass
 
     return ExecutionResult(
         command=command,
         stdout="".join(stdout_lines),
         stderr="".join(stderr_lines),
         exit_code=exit_code,
-        output_file=tmp.name,
         truncated=False,
         total_lines=total_stdout,
     )

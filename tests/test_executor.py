@@ -55,17 +55,28 @@ def test_streaming_stderr_separate():
     assert any("err" in l for l in stderr_lines)
 
 
-def test_streaming_output_file_created():
+def test_streaming_output_file_only_when_truncated():
+    # No file for small output
     result = execute_streaming(
         "echo hello",
         on_stdout=lambda l: None,
         on_stderr=lambda l: None,
         on_stdin_needed=lambda _: None,
     )
-    assert result.output_file != ""
-    assert os.path.exists(result.output_file)
-    content = open(result.output_file).read()
-    assert "hello" in content
+    assert result.output_file == ""
+    assert result.truncated is False
+
+    # File created only when output exceeds max_output_lines
+    result2 = execute_streaming(
+        "seq 1 300",
+        on_stdout=lambda l: None,
+        on_stderr=lambda l: None,
+        on_stdin_needed=lambda _: None,
+        max_output_lines=50,
+    )
+    assert result2.output_file != ""
+    assert os.path.exists(result2.output_file)
+    assert result2.truncated is True
 
 
 def test_streaming_truncation():
