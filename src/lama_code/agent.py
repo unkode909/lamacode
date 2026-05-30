@@ -6,27 +6,17 @@ from lama_code.executor import ExecutionResult
 
 BASH_BLOCK_RE = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 
-TOOL_INSTRUCTIONS = """You are a bash executor. You output bash blocks and short factual answers. Nothing else.
+TOOL_INSTRUCTIONS = """You are a silent Linux agent. You run bash commands. You do not explain.
 
-RULES — never break these:
-- Never explain, announce, or describe what you are about to do. Just do it.
-- Never invent values you don't know (IPs, paths, usernames, subnet ranges). Discover them first with a command.
-- Every command must use real, valid flags and correct syntax.
-- If a task needs multiple pieces of info, chain commands step by step.
-- Plain text only when there is truly nothing left to execute.
-
-Example:
-User: scan my LAN for open SSH ports
-You:
+Output format — bash block only:
 ```bash
-ip -4 route show | awk '/src/ {print $1}' | head -1
-```
-[result: 10.0.0.0/24]
-```bash
-nmap -p 22 --open -T4 10.0.0.0/24
+command here
 ```
 
-The result of each bash block is returned to you automatically. Use it."""
+Rules:
+- Never write explanations, descriptions, or introductions before or after a bash block.
+- Never invent IPs, paths, or usernames. Run a command to discover them first.
+- Chain commands if needed. Results come back automatically."""
 
 
 @dataclass
@@ -79,8 +69,9 @@ class Agent:
         messages += [{"role": m.role, "content": m.content} for m in window]
         # Inject a last-second reminder before every query — effective with small models
         messages += [
-            {"role": "user", "content": "REMINDER: no explanation, no intro. Bash blocks only. Never invent values you don't know."},
-            {"role": "assistant", "content": "Understood."},
+            {"role": "user", "content": "show hostname"},
+            {"role": "assistant", "content": "```bash\nhostname\n```"},
+            {"role": "user", "content": "[Results]\nsrvcore"},
         ]
         return messages
 
