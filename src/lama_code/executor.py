@@ -113,12 +113,28 @@ def execute_streaming(
         )
 
     def read_stream(stream, kind: str, cb: Callable[[str], None]) -> None:
+        """Read stream line by line, flushing partial lines when process ends."""
+        buf = ""
         try:
-            for line in stream:
-                record(line, kind)
-                cb(line)
+            raw = stream.raw if hasattr(stream, "raw") else stream
+            while True:
+                chunk = raw.read(256)
+                if not chunk:
+                    break
+                text = chunk.decode("utf-8", errors="replace") if isinstance(chunk, bytes) else chunk
+                buf += text
+                while "\n" in buf:
+                    line, buf = buf.split("\n", 1)
+                    line += "\n"
+                    record(line, kind)
+                    cb(line)
         except Exception:
             pass
+        finally:
+            # Flush any remaining partial line (e.g. nmap stats without trailing newline)
+            if buf:
+                record(buf, kind)
+                cb(buf)
 
     t_out = threading.Thread(
         target=read_stream, args=(proc.stdout, "out", on_stdout), daemon=True
