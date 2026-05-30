@@ -143,11 +143,13 @@ def execute_streaming(
     tmp.close()
     exit_code = proc.returncode if proc.returncode is not None else 1
     total = len(all_lines)
+    total_stdout = len(stdout_lines)
 
-    if total > max_output_lines:
+    if total_stdout > max_output_lines:
         kept = "".join(stdout_lines[:max_output_lines])
+        extra = total_stdout - max_output_lines
         truncated_msg = (
-            f"[... {total - max_output_lines} lignes supplémentaires — voir {tmp.name}]"
+            f"[... {extra} lignes supplémentaires — voir {tmp.name}]"
         )
         return ExecutionResult(
             command=command,
@@ -156,7 +158,7 @@ def execute_streaming(
             exit_code=exit_code,
             output_file=tmp.name,
             truncated=True,
-            total_lines=total,
+            total_lines=total_stdout,
         )
 
     return ExecutionResult(
@@ -166,5 +168,5 @@ def execute_streaming(
         exit_code=exit_code,
         output_file=tmp.name,
         truncated=False,
-        total_lines=total,
+        total_lines=total_stdout,
     )

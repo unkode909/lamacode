@@ -1,3 +1,4 @@
+import os
 from lama_code.executor import execute, execute_streaming
 
 
@@ -61,7 +62,6 @@ def test_streaming_output_file_created():
         on_stderr=lambda l: None,
         on_stdin_needed=lambda _: None,
     )
-    import os
     assert result.output_file != ""
     assert os.path.exists(result.output_file)
     content = open(result.output_file).read()
