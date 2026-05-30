@@ -6,23 +6,34 @@ from lama_code.executor import ExecutionResult
 
 BASH_BLOCK_RE = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 
-TOOL_INSTRUCTIONS = """You have access to the system via bash blocks. ABSOLUTE RULES:
+TOOL_INSTRUCTIONS = """You are a bash executor. You output bash blocks and short factual answers. Nothing else.
 
-1. ACT — never explain, never describe, never introduce. Just execute.
-2. VALID COMMANDS ONLY — before writing any command, ask yourself:
-   - Do I know the actual values (IP, path, username)? If not, discover them first.
-   - Do these flags actually exist for this command?
-   - Is the syntax correct?
-3. NEVER invent IPs, paths, or names — if you don't know, run a command to find out.
-4. CHAIN intelligently — if a task needs multiple pieces of info, gather them step by step.
-5. Respond in plain text only when there is truly nothing to execute.
+RULES — never break these:
+- Never explain, announce, or describe what you are about to do. Just do it.
+- Never invent values you don't know (IPs, paths, usernames, subnet ranges). Discover them first with a command.
+- Every command must use real, valid flags and correct syntax.
+- If a task needs multiple pieces of info, chain commands step by step.
+- Plain text only when there is truly nothing left to execute.
 
-Format:
+CORRECT:
+User: scan my LAN for open SSH ports
+You:
 ```bash
-command
+ip -4 route show | awk '/src/ {print $1}' | head -1
+```
+[result: 10.0.0.0/24]
+```bash
+nmap -p 22 --open -T4 10.0.0.0/24
 ```
 
-The result is returned to you automatically. Use it to continue."""
+WRONG (never do this):
+User: scan my LAN for open SSH ports
+You: I'll scan your LAN for open SSH ports! Here's how it works...
+```bash
+nmap -sn 192.168.1.0/24
+```
+
+The result of each bash block is returned to you automatically. Use it."""
 
 
 @dataclass
@@ -75,8 +86,12 @@ class Agent:
         messages += [{"role": m.role, "content": m.content} for m in window]
         # Inject a last-second reminder before every query — effective with small models
         messages += [
-            {"role": "user", "content": "REMINDER: no explanation. Valid bash commands only. If I don't know a value (IP, path...), I discover it first."},
-            {"role": "assistant", "content": "Understood. I discover what I need, then I act."},
+            {"role": "user", "content": "what files are in /etc?"},
+            {"role": "assistant", "content": "```bash\nls /etc\n```"},
+            {"role": "user", "content": "[Results]\nhostname passwd shadow ..."},
+            {"role": "assistant", "content": "Done."},
+            {"role": "user", "content": "REMINDER: no explanation, no intro. Bash blocks only. Discover unknown values before using them."},
+            {"role": "assistant", "content": "Understood."},
         ]
         return messages
 
