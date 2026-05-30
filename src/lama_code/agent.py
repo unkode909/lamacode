@@ -15,7 +15,7 @@ RULES — never break these:
 - If a task needs multiple pieces of info, chain commands step by step.
 - Plain text only when there is truly nothing left to execute.
 
-CORRECT:
+Example:
 User: scan my LAN for open SSH ports
 You:
 ```bash
@@ -24,13 +24,6 @@ ip -4 route show | awk '/src/ {print $1}' | head -1
 [result: 10.0.0.0/24]
 ```bash
 nmap -p 22 --open -T4 10.0.0.0/24
-```
-
-WRONG (never do this):
-User: scan my LAN for open SSH ports
-You: I'll scan your LAN for open SSH ports! Here's how it works...
-```bash
-nmap -sn 192.168.1.0/24
 ```
 
 The result of each bash block is returned to you automatically. Use it."""
@@ -86,11 +79,7 @@ class Agent:
         messages += [{"role": m.role, "content": m.content} for m in window]
         # Inject a last-second reminder before every query — effective with small models
         messages += [
-            {"role": "user", "content": "what files are in /etc?"},
-            {"role": "assistant", "content": "```bash\nls /etc\n```"},
-            {"role": "user", "content": "[Results]\nhostname passwd shadow ..."},
-            {"role": "assistant", "content": "Done."},
-            {"role": "user", "content": "REMINDER: no explanation, no intro. Bash blocks only. Discover unknown values before using them."},
+            {"role": "user", "content": "REMINDER: no explanation, no intro. Bash blocks only. Never invent values you don't know."},
             {"role": "assistant", "content": "Understood."},
         ]
         return messages
