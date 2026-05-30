@@ -9,7 +9,7 @@ from lama_code.executor import ExecutionResult
 console = Console()
 
 _SPINNER_CHARS = ['|', '/', '-', '\\']
-_PREFIX = "\nlama▸ "
+_PREFIX = "lama▸ "
 
 class _Spinner:
     def __init__(self):
@@ -18,6 +18,8 @@ class _Spinner:
 
     def start(self) -> None:
         self._stop.clear()
+        sys.stdout.write(f"\n{_PREFIX}")
+        sys.stdout.flush()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
