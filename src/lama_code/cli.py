@@ -1,11 +1,12 @@
 import argparse
+import functools
 import sys
 from pathlib import Path
 
 from lama_code import __version__
 from lama_code.config import load_config
 from lama_code.ollama import OllamaClient, OllamaError
-from lama_code.executor import execute
+from lama_code.executor import execute_streaming
 from lama_code.agent import Agent
 from lama_code import display as _display
 
@@ -38,7 +39,14 @@ def main() -> None:
     args = parse_args()
     cfg = load_config(yolo_override=args.yolo, model_override=args.model)
     ollama = OllamaClient(base_url=cfg.ollama_url, model=cfg.model)
-    agent = Agent(cfg=cfg, ollama=ollama, display=_display, execute_fn=execute)
+    agent = Agent(
+        cfg=cfg, ollama=ollama, display=_display,
+        execute_fn=functools.partial(
+            execute_streaming,
+            stdin_timeout=cfg.stdin_timeout,
+            max_output_lines=cfg.max_output_lines,
+        ),
+    )
 
     if args.prompt:
         try:

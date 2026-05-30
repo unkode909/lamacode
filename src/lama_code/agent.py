@@ -38,7 +38,7 @@ class Agent:
         cfg: Config,
         ollama,
         display,
-        execute_fn: Callable[[str], ExecutionResult],
+        execute_fn: Callable,
     ):
         self.cfg = cfg
         self.ollama = ollama
@@ -88,10 +88,33 @@ class Agent:
             if not self.cfg.yolo and not self.display.confirm():
                 parts.append(f"$ {cmd}\n[ignoré par l'utilisateur]")
                 continue
-            result = self.execute_fn(cmd)
+            result = self.execute_fn(
+                cmd,
+                on_stdout=self.display.stream_stdout_line,
+                on_stderr=self.display.stream_stderr_line,
+                on_stdin_needed=self._handle_stdin_needed,
+            )
             self.display.show_result(result)
-            if result.success:
-                parts.append(f"$ {cmd}\n{result.stdout}")
-            else:
-                parts.append(f"$ {cmd}\n[exit {result.exit_code}]\n{result.stderr}")
+            parts.append(self._format_result(result))
         return "\n\n".join(parts)
+
+    def _handle_stdin_needed(self, output_so_far: str) -> str | None:
+        self.display.show_stdin_waiting()
+        messages = self._build_messages() + [{
+            "role": "user",
+            "content": (
+                f"[La commande attend une entrée. Output jusqu'ici :]\n{output_so_far}\n\n"
+                "Réponds avec ```stdin\\nvaleur\\n``` ou écris 'utilisateur' "
+                "pour laisser l'humain répondre."
+            ),
+        }]
+        response = "".join(self.ollama.generate(messages))
+        stdin_blocks = re.findall(r"```stdin\n(.*?)```", response, re.DOTALL)
+        if stdin_blocks:
+            return stdin_blocks[0]
+        return None
+
+    def _format_result(self, result) -> str:
+        if result.success:
+            return f"$ {result.command}\n{result.stdout}"
+        return f"$ {result.command}\n[exit {result.exit_code}]\n{result.stderr}"
