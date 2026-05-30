@@ -1,11 +1,13 @@
 from pathlib import Path
-from lama_code.config import load_config
+from unittest.mock import patch
+from lama_code.config import load_config, DEFAULT_OLLAMA_URL
 
 
 def test_defaults_when_no_files(tmp_path):
-    cfg = load_config(home_dir=tmp_path, project_dir=tmp_path / "project")
+    with patch("lama_code.config._discover_ollama_url", return_value=DEFAULT_OLLAMA_URL):
+        cfg = load_config(home_dir=tmp_path, project_dir=tmp_path / "project")
     assert cfg.model == "phi4-mini"
-    assert cfg.ollama_url == "http://localhost:11434"
+    assert cfg.ollama_url == DEFAULT_OLLAMA_URL
     assert cfg.context_window == 25
     assert cfg.yolo is False
     assert cfg.max_cycles == 10

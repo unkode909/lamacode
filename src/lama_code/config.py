@@ -1,13 +1,46 @@
 import dataclasses
+import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 import yaml
+
+DEFAULT_OLLAMA_URL = "http://localhost:11434"
+
+
+def _discover_ollama_url() -> str:
+    # 1. Variable d'environnement standard d'Ollama
+    host = os.environ.get("OLLAMA_HOST", "").strip()
+    if host:
+        if not host.startswith("http"):
+            host = f"http://{host}"
+        return host.rstrip("/")
+
+    # 2. Auto-découverte via ss (port que le processus ollama écoute réellement)
+    try:
+        out = subprocess.run(
+            ["ss", "-tlnp"],
+            capture_output=True, text=True, timeout=2
+        ).stdout
+        for line in out.splitlines():
+            if "ollama" in line:
+                # format: LISTEN 0 128 *:11434 ...
+                parts = line.split()
+                for part in parts:
+                    if ":" in part:
+                        port = part.rsplit(":", 1)[-1]
+                        if port.isdigit():
+                            return f"http://localhost:{port}"
+    except Exception:
+        pass
+
+    return DEFAULT_OLLAMA_URL
 
 
 @dataclass
 class Config:
     model: str = "phi4-mini"
-    ollama_url: str = "http://localhost:11434"
+    ollama_url: str = DEFAULT_OLLAMA_URL
     context_window: int = 25
     yolo: bool = False
     max_cycles: int = 10
@@ -37,6 +70,10 @@ def load_config(
             merged.update(front)
             if body:
                 bodies.append(body)
+
+    # ollama_url: fichier .lama.md > OLLAMA_HOST env > auto-découverte > défaut
+    if "ollama_url" not in merged:
+        merged["ollama_url"] = _discover_ollama_url()
 
     overrides = {
         k: merged[k]
