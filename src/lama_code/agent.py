@@ -99,9 +99,10 @@ class Agent:
         window = self.history[-(self.cfg.context_window * 2):]
         messages += [{"role": m.role, "content": m.content} for m in window]
         messages += [
-            {"role": "user", "content": "how many CPU cores?"},
-            {"role": "assistant", "content": "```bash\nnproc\n```"},
-            {"role": "user", "content": "[Results]\n12"},
+            {"role": "user", "content": "EXAMPLE — disk usage of /var"},
+            {"role": "assistant", "content": "```bash\ndu -sh /var\n```"},
+            {"role": "user", "content": "[Results]\n4.2G\t/var"},
+            {"role": "assistant", "content": "/var uses 4.2G."},
         ]
         return messages
 
