@@ -65,5 +65,8 @@ def main() -> None:
             continue
         try:
             agent.run(user_input)
+        except KeyboardInterrupt:
+            print()
+            break
         except OllamaError as e:
             _display.print_error(str(e))
