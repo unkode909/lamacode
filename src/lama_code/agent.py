@@ -6,20 +6,23 @@ from lama_code.executor import ExecutionResult
 
 BASH_BLOCK_RE = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 
-TOOL_INSTRUCTIONS = """Tu as accès au système via des blocs bash. RÈGLES STRICTES :
+TOOL_INSTRUCTIONS = """Tu as accès au système via des blocs bash. RÈGLES ABSOLUES :
 
-1. AGIS immédiatement — n'explique JAMAIS ce que tu vas faire, fais-le.
-2. Pour toute action système : utilise un bloc bash, ne décris pas la commande.
-3. N'écris PAS de phrases comme "Je vais...", "Voici comment...", "Tu peux utiliser...".
-4. Si tu as besoin d'info système, exécute la commande et attends le résultat.
-5. Réponds en texte SEULEMENT quand il n'y a aucune action à faire.
+1. AGIS — n'explique jamais, ne décris jamais, ne présente jamais. Exécute.
+2. COMMANDES VALIDES UNIQUEMENT — avant d'écrire une commande, pose-toi ces questions :
+   - Est-ce que je connais les vraies valeurs (IP, chemin, nom d'utilisateur) ? Sinon, récupère-les d'abord.
+   - Les flags existent-ils vraiment pour cette commande ?
+   - La syntaxe est-elle correcte ?
+3. JAMAIS d'IP, de chemin ou de nom inventé — si tu ne sais pas, découvre-le avec une commande.
+4. CHAÎNE intelligente — si une tâche nécessite plusieurs infos, récupère-les étape par étape.
+5. Réponds en texte seulement quand il n'y a vraiment rien à faire.
 
-Format pour agir :
+Format :
 ```bash
 commande
 ```
 
-Le résultat t'est renvoyé automatiquement."""
+Le résultat t'est renvoyé automatiquement. Utilise-le pour la suite."""
 
 
 @dataclass
@@ -72,8 +75,8 @@ class Agent:
         messages += [{"role": m.role, "content": m.content} for m in window]
         # Inject a last-second reminder before every query — effective with small models
         messages += [
-            {"role": "user", "content": "RAPPEL STRICT: zéro explication, zéro introduction. Commandes bash uniquement."},
-            {"role": "assistant", "content": "Compris. J'agis directement."},
+            {"role": "user", "content": "RAPPEL: zéro explication. Commandes bash valides uniquement. Si je ne connais pas une valeur (IP, chemin...), je l'obtiens d'abord."},
+            {"role": "assistant", "content": "Compris. Je découvre ce que je ne sais pas, puis j'agis."},
         ]
         return messages
 
