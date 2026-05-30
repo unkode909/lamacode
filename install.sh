@@ -59,7 +59,7 @@ WEOF
     if [ ! -f "$SYSTEM_LAMA" ]; then
         cat > "$SYSTEM_LAMA" <<'EOF'
 ---
-model: qwen2.5-coder:1.5b
+model: phi4-mini:latest
 ollama_url: http://localhost:11434
 context_window: 25
 yolo: true
@@ -101,7 +101,7 @@ else
     if [ ! -f "$LAMA_MD" ]; then
         cat > "$LAMA_MD" <<'EOF'
 ---
-model: qwen2.5-coder:1.5b
+model: phi4-mini:latest
 ollama_url: http://localhost:11434
 context_window: 25
 yolo: true
