@@ -15,9 +15,13 @@ When asked to do something on the system:
 2. If you need a value you don't know (IP, path, username), run a command to get it first.
 3. After seeing results, give a one-line factual answer if needed. Nothing more.
 
-```bash
-command
-```"""
+Example interaction:
+  User: what is the default gateway?
+  You: ```bash
+ip route show default
+```
+  [Results]: default via 10.0.0.1 dev eth0
+  You: Default gateway: 10.0.0.1"""
 
 
 @dataclass
@@ -109,12 +113,6 @@ class Agent:
         messages = [{"role": "system", "content": system}]
         window = self.history[-(self.cfg.context_window * 2):]
         messages += [{"role": m.role, "content": m.content} for m in window]
-        messages += [
-            {"role": "user", "content": "what is the default gateway?"},
-            {"role": "assistant", "content": "```bash\nip route show default\n```"},
-            {"role": "user", "content": "[Results]\ndefault via 10.0.0.1 dev eth0 proto dhcp"},
-            {"role": "assistant", "content": "Default gateway: 10.0.0.1"},
-        ]
         return messages
 
     def _stream(self, messages: list[dict]) -> tuple[str, dict]:
