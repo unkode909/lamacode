@@ -57,6 +57,8 @@ class Config:
     yolo: bool = False
     max_cycles: int = 10
     system_prompt: str = ""
+    stdin_timeout: float = 3.0
+    max_output_lines: int = 200
 
 
 def load_config(
@@ -96,6 +98,10 @@ def load_config(
         overrides["context_window"] = int(merged["context_window"])
     if "max_cycles" in merged:
         overrides["max_cycles"] = int(merged["max_cycles"])
+    if "stdin_timeout" in merged:
+        overrides["stdin_timeout"] = float(merged["stdin_timeout"])
+    if "max_output_lines" in merged:
+        overrides["max_output_lines"] = int(merged["max_output_lines"])
     overrides["system_prompt"] = "\n\n".join(bodies)
     cfg = dataclasses.replace(Config(), **overrides)
 

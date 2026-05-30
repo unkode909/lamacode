@@ -53,3 +53,19 @@ def test_file_without_frontmatter(tmp_path):
     cfg = load_config(home_dir=tmp_path, project_dir=tmp_path / "project")
     assert cfg.system_prompt == "Juste des instructions."
     assert cfg.model == "phi4-mini"
+
+
+def test_streaming_defaults(tmp_path):
+    with patch("lama_code.config._discover_ollama_url", return_value=DEFAULT_OLLAMA_URL):
+        cfg = load_config(home_dir=tmp_path, project_dir=tmp_path / "project")
+    assert cfg.stdin_timeout == 3.0
+    assert cfg.max_output_lines == 200
+
+
+def test_streaming_params_from_file(tmp_path):
+    (tmp_path / ".lama.md").write_text(
+        "---\nstdin_timeout: 5.0\nmax_output_lines: 100\n---\n"
+    )
+    cfg = load_config(home_dir=tmp_path, project_dir=tmp_path / "project")
+    assert cfg.stdin_timeout == 5.0
+    assert cfg.max_output_lines == 100
