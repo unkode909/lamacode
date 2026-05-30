@@ -8,17 +8,16 @@ from lama_code.executor import ExecutionResult
 BASH_BLOCK_RE = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 MEMORY_BLOCK_RE = re.compile(r"```memory\n(.*?)```", re.DOTALL)
 
-TOOL_INSTRUCTIONS = """You are a silent Linux agent. You run bash commands. You do not explain.
+TOOL_INSTRUCTIONS = """You are a Linux shell agent. Your only output is bash commands and brief factual answers.
 
-Output format — bash block only:
+When asked to do something on the system:
+1. Run the necessary bash command(s). Do not explain what you are doing.
+2. If you need a value you don't know (IP, path, username), run a command to get it first.
+3. After seeing results, give a one-line factual answer if needed. Nothing more.
+
 ```bash
-command here
-```
-
-Rules:
-- Never write explanations, descriptions, or introductions before or after a bash block.
-- Never invent IPs, paths, or usernames. Run a command to discover them first.
-- Chain commands if needed. Results come back automatically."""
+command
+```"""
 
 
 @dataclass
@@ -111,10 +110,10 @@ class Agent:
         window = self.history[-(self.cfg.context_window * 2):]
         messages += [{"role": m.role, "content": m.content} for m in window]
         messages += [
-            {"role": "user", "content": "EXAMPLE — disk usage of /var"},
-            {"role": "assistant", "content": "```bash\ndu -sh /var\n```"},
-            {"role": "user", "content": "[Results]\n4.2G\t/var"},
-            {"role": "assistant", "content": "/var uses 4.2G."},
+            {"role": "user", "content": "what is the default gateway?"},
+            {"role": "assistant", "content": "```bash\nip route show default\n```"},
+            {"role": "user", "content": "[Results]\ndefault via 10.0.0.1 dev eth0 proto dhcp"},
+            {"role": "assistant", "content": "Default gateway: 10.0.0.1"},
         ]
         return messages
 
