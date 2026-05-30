@@ -18,12 +18,7 @@ command here
 Rules:
 - Never write explanations, descriptions, or introductions before or after a bash block.
 - Never invent IPs, paths, or usernames. Run a command to discover them first.
-- Chain commands if needed. Results come back automatically.
-
-To save a fact for future sessions, use:
-```memory
-key: value
-```"""
+- Chain commands if needed. Results come back automatically."""
 
 
 @dataclass
@@ -104,9 +99,9 @@ class Agent:
         window = self.history[-(self.cfg.context_window * 2):]
         messages += [{"role": m.role, "content": m.content} for m in window]
         messages += [
-            {"role": "user", "content": "list users on this system"},
-            {"role": "assistant", "content": "```bash\ngetent passwd | awk -F: '$3>=1000 {print $1}'\n```"},
-            {"role": "user", "content": "[Results]\nuser\nexchange"},
+            {"role": "user", "content": "how many CPU cores?"},
+            {"role": "assistant", "content": "```bash\nnproc\n```"},
+            {"role": "user", "content": "[Results]\n12"},
         ]
         return messages
 
