@@ -42,6 +42,25 @@ _spinner = _Spinner()
 _spinner_running = False
 
 
+def select_model(models: list[str], current: str) -> str:
+    """Show a numbered model selection menu. Returns the chosen model name."""
+    console.print("\n[bold]Modèles disponibles :[/bold]")
+    for i, name in enumerate(models, 1):
+        marker = "[cyan]▶[/cyan] " if name == current else "  "
+        console.print(f"  {marker}[bold]{i}[/bold]. {name}")
+    console.print(f"\n[dim](modèle configuré : {current})[/dim]")
+    while True:
+        try:
+            raw = input("Choisir [1-" + str(len(models)) + "] (Entrée = garder actuel) : ").strip()
+        except (KeyboardInterrupt, EOFError):
+            return current
+        if not raw:
+            return current
+        if raw.isdigit() and 1 <= int(raw) <= len(models):
+            return models[int(raw) - 1]
+        console.print("[red]Choix invalide.[/red]")
+
+
 def print_header(model: str, context_window: int, yolo: bool, lama_md_status: str) -> None:
     yolo_str = "[red]oui[/red]" if yolo else "[green]non[/green]"
     console.print(

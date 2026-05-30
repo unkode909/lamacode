@@ -5,7 +5,7 @@ from pathlib import Path
 
 from lama_code import __version__
 from lama_code.config import load_config
-from lama_code.ollama import OllamaClient, OllamaError
+from lama_code.ollama import OllamaClient, OllamaError, list_models
 from lama_code.executor import execute_streaming
 from lama_code.agent import Agent
 from lama_code import display as _display
@@ -47,6 +47,15 @@ def main() -> None:
             max_output_lines=cfg.max_output_lines,
         ),
     )
+
+    # Model selection menu — only in REPL mode and only if --model was not passed
+    if not args.prompt and args.model is None:
+        models = list_models(cfg.ollama_url)
+        if len(models) > 1:
+            chosen = _display.select_model(models, cfg.model)
+            if chosen != cfg.model:
+                cfg.model = chosen
+                ollama.model = chosen
 
     if args.prompt:
         try:

@@ -8,6 +8,17 @@ class OllamaError(Exception):
     pass
 
 
+def list_models(base_url: str) -> list[str]:
+    """Return sorted list of locally installed Ollama model names."""
+    try:
+        url = f"{base_url.rstrip('/')}/api/tags"
+        with urllib.request.urlopen(url, timeout=3) as resp:
+            data = json.loads(resp.read())
+        return sorted(m["name"] for m in data.get("models", []))
+    except Exception:
+        return []
+
+
 class OllamaClient:
     def __init__(self, base_url: str, model: str):
         self.base_url = base_url.rstrip("/")
