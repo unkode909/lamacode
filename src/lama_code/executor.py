@@ -1,4 +1,5 @@
 import os
+import re
 import signal
 import subprocess
 import tempfile
@@ -6,6 +7,15 @@ import threading
 import time
 from dataclasses import dataclass
 from typing import Callable
+
+# Lines matching these patterns likely indicate the process is waiting for input
+STDIN_PROMPT_RE = re.compile(
+    r"[?:>]\s*$"           # ends with ?, :, >
+    r"|(\[.+/.+\])\s*$"    # [Y/n], [yes/no], [o/N]
+    r"|[Pp]assword\s*:\s*$"
+    r"|[Ee]nter\s+.+:\s*$"
+    r"|\(yes or no\)\s*$"
+)
 
 
 @dataclass
@@ -55,6 +65,7 @@ def execute_streaming(
     stderr_lines: list[str] = []
     all_lines: list[str] = []
     last_line_time: list[float] = [time.time()]
+    last_line_content: list[str] = [""]
     lock = threading.Lock()
     # Temp file created lazily — only written if truncation occurs
     _tmp_path: list[str] = [""]
@@ -73,6 +84,7 @@ def execute_streaming(
         with lock:
             all_lines.append(line)
             last_line_time[0] = time.time()
+            last_line_content[0] = line
             # Only write to disk if we're approaching the truncation limit
             if len(all_lines) >= max_output_lines:
                 try:
@@ -117,30 +129,40 @@ def execute_streaming(
     t_out.start()
     t_err.start()
 
+    def _needs_stdin() -> bool:
+        idle = time.time() - last_line_time[0]
+        last = last_line_content[0].rstrip("\n")
+        # Fast path: line looks like a prompt and process has been quiet 0.5s
+        if idle >= 0.5 and STDIN_PROMPT_RE.search(last):
+            return True
+        # Fallback: long silence (nmap-style slow commands)
+        return idle >= stdin_timeout
+
+    def _send_stdin() -> None:
+        current = "".join(all_lines)
+        value = on_stdin_needed(current)
+        if value is not None:
+            try:
+                proc.stdin.write(value)
+                proc.stdin.flush()
+            except Exception:
+                pass
+        else:
+            try:
+                user_input = input() + "\n"
+                proc.stdin.write(user_input)
+                proc.stdin.flush()
+            except Exception:
+                pass
+
     stdin_requested = False
     try:
         while proc.poll() is None:
             time.sleep(0.2)
-            if not stdin_requested:
-                idle = time.time() - last_line_time[0]
-                if idle >= stdin_timeout:
-                    stdin_requested = True
-                    current = "".join(all_lines)
-                    value = on_stdin_needed(current)
-                    if value is not None:
-                        try:
-                            proc.stdin.write(value)
-                            proc.stdin.flush()
-                        except Exception:
-                            pass
-                    else:
-                        try:
-                            user_input = input() + "\n"
-                            proc.stdin.write(user_input)
-                            proc.stdin.flush()
-                        except Exception:
-                            pass
-                    stdin_requested = False
+            if not stdin_requested and _needs_stdin():
+                stdin_requested = True
+                _send_stdin()
+                stdin_requested = False
     except KeyboardInterrupt:
         proc.send_signal(signal.SIGINT)
 
