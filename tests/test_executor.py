@@ -1,4 +1,4 @@
-from lama_code.executor import execute
+from lama_code.executor import execute, execute_streaming
 
 
 def test_successful_command():
@@ -25,3 +25,81 @@ def test_stdout_captured():
 def test_command_stored():
     result = execute("echo test")
     assert result.command == "echo test"
+
+
+def test_streaming_stdout_live():
+    lines = []
+    result = execute_streaming(
+        "printf 'line1\nline2\nline3\n'",
+        on_stdout=lines.append,
+        on_stderr=lambda l: None,
+        on_stdin_needed=lambda _: None,
+    )
+    assert result.success is True
+    assert result.exit_code == 0
+    assert any("line1" in l for l in lines)
+    assert any("line2" in l for l in lines)
+
+
+def test_streaming_stderr_separate():
+    stdout_lines = []
+    stderr_lines = []
+    result = execute_streaming(
+        "echo out; echo err >&2",
+        on_stdout=stdout_lines.append,
+        on_stderr=stderr_lines.append,
+        on_stdin_needed=lambda _: None,
+    )
+    assert any("out" in l for l in stdout_lines)
+    assert any("err" in l for l in stderr_lines)
+
+
+def test_streaming_output_file_created():
+    result = execute_streaming(
+        "echo hello",
+        on_stdout=lambda l: None,
+        on_stderr=lambda l: None,
+        on_stdin_needed=lambda _: None,
+    )
+    import os
+    assert result.output_file != ""
+    assert os.path.exists(result.output_file)
+    content = open(result.output_file).read()
+    assert "hello" in content
+
+
+def test_streaming_truncation():
+    result = execute_streaming(
+        "seq 1 300",
+        on_stdout=lambda l: None,
+        on_stderr=lambda l: None,
+        on_stdin_needed=lambda _: None,
+        max_output_lines=50,
+    )
+    assert result.truncated is True
+    assert result.total_lines == 300
+    assert result.stdout.count("\n") <= 51  # 50 lines + truncation message
+
+
+def test_streaming_result_has_new_fields():
+    result = execute_streaming(
+        "echo hi",
+        on_stdout=lambda l: None,
+        on_stderr=lambda l: None,
+        on_stdin_needed=lambda _: None,
+    )
+    assert hasattr(result, "output_file")
+    assert hasattr(result, "truncated")
+    assert hasattr(result, "total_lines")
+    assert result.truncated is False
+
+
+def test_streaming_failing_command():
+    result = execute_streaming(
+        "ls /nonexistent_xyz_path",
+        on_stdout=lambda l: None,
+        on_stderr=lambda l: None,
+        on_stdin_needed=lambda _: None,
+    )
+    assert result.success is False
+    assert result.exit_code != 0
