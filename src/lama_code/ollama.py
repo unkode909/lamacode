@@ -42,9 +42,10 @@ class OllamaClient:
                 "POST", parsed.path, body=payload,
                 headers={"Content-Type": "application/json"},
             )
-            resp = conn.getresponse()
-            # Remove read timeout — TCP resets naturally if Ollama crashes
+            # Remove timeout before getresponse() — model loading can take >10s
+            # TCP resets naturally if Ollama crashes mid-generation
             conn.sock.settimeout(None)
+            resp = conn.getresponse()
         except (ConnectionRefusedError, OSError, TimeoutError) as e:
             raise OllamaError(
                 f"Impossible de joindre Ollama sur {self.base_url}: {e}"
