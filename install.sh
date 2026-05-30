@@ -13,15 +13,14 @@ if [ -z "$PYTHON" ]; then
     exit 1
 fi
 
-PY_VERSION=$($PYTHON -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
 PY_MAJOR=$($PYTHON -c "import sys; print(sys.version_info.major)")
 PY_MINOR=$($PYTHON -c "import sys; print(sys.version_info.minor)")
+PY_VERSION="$PY_MAJOR.$PY_MINOR"
 
 if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 10 ]; }; then
     echo "Erreur : Python 3.10+ requis (trouvé $PY_VERSION)." >&2
     exit 1
 fi
-
 echo "✓ Python $PY_VERSION"
 
 # Ollama
@@ -38,34 +37,52 @@ fi
 
 echo
 
-# Installation globale (requiert root) ou locale (user courant)
+# ── Installation ─────────────────────────────────────────────────────────────
+
 if [ "$(id -u)" -eq 0 ]; then
-    echo "Installation globale (root détecté)..."
+    echo "Installation globale (root)..."
+
+    # Installe le package en mode éditable dans le site-packages système
     $PYTHON -m pip install -e "$REPO_DIR" --break-system-packages -q
 
-    # Wrapper dans /usr/local/bin accessible à tous
+    # Crée un wrapper dans /usr/local/bin (accessible à tous les users)
     WRAPPER=/usr/local/bin/lama-code
-    LAMA_BIN=$($PYTHON -c "import shutil; print(shutil.which('lama-code') or '')" 2>/dev/null)
-
-    # Si pip n'a pas mis le bin dans /usr/local/bin, créer un wrapper
-    if [ "$LAMA_BIN" != "$WRAPPER" ]; then
-        cat > "$WRAPPER" <<WEOF
+    cat > "$WRAPPER" <<WEOF
 #!/usr/bin/env bash
-exec $PYTHON -m lama_code "\$@"
+exec "$PYTHON" -m lama_code "\$@"
 WEOF
-        chmod 755 "$WRAPPER"
+    chmod 755 "$WRAPPER"
+    echo "✓ lama-code installé dans /usr/local/bin (tous les utilisateurs)"
+
+    # Crée /etc/lama.md — config système partagée (lue avant ~/.lama.md)
+    SYSTEM_LAMA=/etc/lama.md
+    if [ ! -f "$SYSTEM_LAMA" ]; then
+        cat > "$SYSTEM_LAMA" <<'EOF'
+---
+model: qwen2.5-coder:1.5b
+ollama_url: http://localhost:11434
+context_window: 25
+yolo: true
+max_cycles: 10
+stdin_timeout: 30
+---
+
+Tu es lama-code, un agent d'exécution local sur Linux.
+Tu EXÉCUTES des commandes — tu n'expliques pas, tu n'annonces pas, tu agis.
+Réponses courtes. Zéro blabla. Si c'est faisable avec une commande, lance-la.
+EOF
+        chmod 644 "$SYSTEM_LAMA"
+        echo "✓ /etc/lama.md créé (config système partagée)"
+    else
+        echo "✓ /etc/lama.md déjà présent"
     fi
 
-    echo "✓ lama-code installé dans /usr/local/bin (accessible à tous les utilisateurs)"
-
-    # ~/.lama.md pour root
-    LAMA_MD="$HOME/.lama.md"
 else
     echo "Installation locale (user: $USER)..."
     $PYTHON -m pip install -e "$REPO_DIR" --break-system-packages -q
     echo "✓ lama-code installé"
 
-    # PATH
+    # Ajoute ~/.local/bin au PATH si nécessaire
     LOCAL_BIN="$HOME/.local/bin"
     if ! echo "$PATH" | grep -q "$LOCAL_BIN"; then
         SHELL_RC="$HOME/.bashrc"
@@ -73,32 +90,33 @@ else
         if ! grep -q '\.local/bin' "$SHELL_RC" 2>/dev/null; then
             echo "" >> "$SHELL_RC"
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_RC"
-            echo "✓ PATH mis à jour dans $SHELL_RC (relance ton shell ou: source $SHELL_RC)"
+            echo "✓ PATH mis à jour dans $SHELL_RC (relance: source $SHELL_RC)"
         fi
     else
         echo "✓ PATH déjà configuré"
     fi
 
+    # ~/.lama.md personnel
     LAMA_MD="$HOME/.lama.md"
-fi
-
-# ~/.lama.md pour l'utilisateur courant
-if [ ! -f "$LAMA_MD" ]; then
-    cat > "$LAMA_MD" <<'EOF'
+    if [ ! -f "$LAMA_MD" ]; then
+        cat > "$LAMA_MD" <<'EOF'
 ---
 model: qwen2.5-coder:1.5b
+ollama_url: http://localhost:11434
 context_window: 25
-yolo: false
+yolo: true
 max_cycles: 10
+stdin_timeout: 30
 ---
 
 Tu es lama-code, un agent d'exécution local sur Linux.
 Tu EXÉCUTES des commandes — tu n'expliques pas, tu n'annonces pas, tu agis.
 Réponses courtes. Zéro blabla. Si c'est faisable avec une commande, lance-la.
 EOF
-    echo "✓ $LAMA_MD créé (modèle: qwen2.5-coder:1.5b)"
-else
-    echo "✓ $LAMA_MD déjà présent"
+        echo "✓ $LAMA_MD créé"
+    else
+        echo "✓ $LAMA_MD déjà présent"
+    fi
 fi
 
 echo

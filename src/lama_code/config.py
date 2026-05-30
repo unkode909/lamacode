@@ -74,7 +74,7 @@ def load_config(
     bodies: list[str] = []
 
     seen: set = set()
-    for path in [home_dir / ".lama.md", project_dir / ".lama.md"]:
+    for path in [Path("/etc/lama.md"), home_dir / ".lama.md", project_dir / ".lama.md"]:
         resolved = path.resolve()
         if resolved in seen:
             continue
