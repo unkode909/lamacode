@@ -94,8 +94,28 @@ def start_stream() -> None:
     _spinner.start()
 
 
+_thinking_active = False
+
+
 def stream_token(token: str) -> None:
-    global _spinner_running
+    global _spinner_running, _thinking_active
+    from lama_code.ollama import OllamaClient
+    if token.startswith(OllamaClient.THINK_PREFIX):
+        think_text = token[len(OllamaClient.THINK_PREFIX):]
+        if not _thinking_active:
+            _thinking_active = True
+            if _spinner_running:
+                _spinner.stop()
+                _spinner_running = False
+            sys.stdout.write("\n")
+            console.print("[dim italic]🤔 thinking...[/dim italic]")
+        console.print(f"[dim]{think_text}[/dim]", end="")
+        sys.stdout.flush()
+        return
+    if _thinking_active:
+        _thinking_active = False
+        sys.stdout.write("\n")
+        console.print(f"\n[bold cyan]lama▸[/bold cyan] ", end="")
     if _spinner_running:
         _spinner.stop()
         _spinner_running = False

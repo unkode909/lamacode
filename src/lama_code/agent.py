@@ -129,12 +129,14 @@ class Agent:
         return messages
 
     def _stream(self, messages: list[dict]) -> tuple[str, dict]:
+        from lama_code.ollama import OllamaClient
         full = ""
         stats: dict = {}
         self.display.start_stream()
         for token in self.ollama.generate(messages, stats=stats):
             self.display.stream_token(token)
-            full += token
+            if not token.startswith(OllamaClient.THINK_PREFIX):
+                full += token
         self.display.end_stream()
         return full, stats
 

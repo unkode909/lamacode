@@ -25,11 +25,15 @@ class OllamaClient:
         self.base_url = base_url.rstrip("/")
         self.model = model
 
+    # Special prefix used to distinguish thinking tokens from content tokens
+    THINK_PREFIX = "\x00think\x00"
+
     def generate(self, messages: list[dict], stats: dict | None = None) -> Iterator[str]:
         payload = json.dumps({
             "model": self.model,
             "messages": messages,
             "stream": True,
+            "think": True,
         }).encode()
 
         parsed = urllib.parse.urlparse(f"{self.base_url}/api/chat")
@@ -56,7 +60,10 @@ class OllamaClient:
                 if not raw_line:
                     continue
                 chunk = json.loads(raw_line)
-                if token := chunk.get("message", {}).get("content", ""):
+                msg = chunk.get("message", {})
+                if think := msg.get("thinking", ""):
+                    yield self.THINK_PREFIX + think
+                if token := msg.get("content", ""):
                     yield token
                 if chunk.get("done"):
                     if stats is not None:
