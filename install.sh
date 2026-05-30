@@ -2,7 +2,6 @@
 set -e
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LAMA_MD="$HOME/.lama.md"
 
 echo "=== lama-code installer ==="
 echo
@@ -39,26 +38,51 @@ fi
 
 echo
 
-# Install package
-echo "Installation de lama-code..."
-$PYTHON -m pip install -e "$REPO_DIR" --break-system-packages -q
-echo "✓ lama-code installé"
+# Installation globale (requiert root) ou locale (user courant)
+if [ "$(id -u)" -eq 0 ]; then
+    echo "Installation globale (root détecté)..."
+    $PYTHON -m pip install -e "$REPO_DIR" --break-system-packages -q
 
-# PATH
-LOCAL_BIN="$HOME/.local/bin"
-if ! echo "$PATH" | grep -q "$LOCAL_BIN"; then
-    SHELL_RC="$HOME/.bashrc"
-    [ -n "$ZSH_VERSION" ] && SHELL_RC="$HOME/.zshrc"
-    if ! grep -q 'LOCAL_BIN\|\.local/bin' "$SHELL_RC" 2>/dev/null; then
-        echo "" >> "$SHELL_RC"
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_RC"
-        echo "✓ PATH mis à jour dans $SHELL_RC (relance ton shell ou: source $SHELL_RC)"
+    # Wrapper dans /usr/local/bin accessible à tous
+    WRAPPER=/usr/local/bin/lama-code
+    LAMA_BIN=$($PYTHON -c "import shutil; print(shutil.which('lama-code') or '')" 2>/dev/null)
+
+    # Si pip n'a pas mis le bin dans /usr/local/bin, créer un wrapper
+    if [ "$LAMA_BIN" != "$WRAPPER" ]; then
+        cat > "$WRAPPER" <<WEOF
+#!/usr/bin/env bash
+exec $PYTHON -m lama_code "\$@"
+WEOF
+        chmod 755 "$WRAPPER"
     fi
+
+    echo "✓ lama-code installé dans /usr/local/bin (accessible à tous les utilisateurs)"
+
+    # ~/.lama.md pour root
+    LAMA_MD="$HOME/.lama.md"
 else
-    echo "✓ PATH déjà configuré"
+    echo "Installation locale (user: $USER)..."
+    $PYTHON -m pip install -e "$REPO_DIR" --break-system-packages -q
+    echo "✓ lama-code installé"
+
+    # PATH
+    LOCAL_BIN="$HOME/.local/bin"
+    if ! echo "$PATH" | grep -q "$LOCAL_BIN"; then
+        SHELL_RC="$HOME/.bashrc"
+        [ -n "$ZSH_VERSION" ] && SHELL_RC="$HOME/.zshrc"
+        if ! grep -q '\.local/bin' "$SHELL_RC" 2>/dev/null; then
+            echo "" >> "$SHELL_RC"
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_RC"
+            echo "✓ PATH mis à jour dans $SHELL_RC (relance ton shell ou: source $SHELL_RC)"
+        fi
+    else
+        echo "✓ PATH déjà configuré"
+    fi
+
+    LAMA_MD="$HOME/.lama.md"
 fi
 
-# ~/.lama.md global
+# ~/.lama.md pour l'utilisateur courant
 if [ ! -f "$LAMA_MD" ]; then
     cat > "$LAMA_MD" <<'EOF'
 ---
@@ -68,23 +92,23 @@ yolo: false
 max_cycles: 10
 ---
 
-Tu es lama-code, un assistant de développement local sur Linux.
-Tu travailles dans le dossier courant, sous les droits de l'utilisateur.
-Sois concis. Préfère les petites étapes vérifiables.
+Tu es lama-code, un agent d'exécution local sur Linux.
+Tu EXÉCUTES des commandes — tu n'expliques pas, tu n'annonces pas, tu agis.
+Réponses courtes. Zéro blabla. Si c'est faisable avec une commande, lance-la.
 EOF
-    echo "✓ ~/.lama.md créé (modèle: qwen2.5-coder:1.5b)"
+    echo "✓ $LAMA_MD créé (modèle: qwen2.5-coder:1.5b)"
 else
-    echo "✓ ~/.lama.md déjà présent"
+    echo "✓ $LAMA_MD déjà présent"
 fi
 
 echo
 echo "=== Installation terminée ==="
 echo
 echo "Lance lama-code :"
-echo "  lama-code                    # mode REPL interactif"
-echo "  lama-code \"liste les fichiers\"  # one-shot"
-echo "  lama-code --yolo \"...\"       # sans confirmations"
-echo "  lama-code --model phi4-mini  # changer de modèle"
+echo "  lama-code                       # mode REPL interactif"
+echo "  lama-code \"liste les fichiers\"   # one-shot"
+echo "  lama-code --yolo \"...\"          # sans confirmations"
+echo "  lama-code --model phi4-mini     # changer de modèle"
 echo
 echo "Modèles Ollama recommandés :"
 echo "  ollama pull qwen2.5-coder:1.5b  # rapide, orienté code (défaut)"
