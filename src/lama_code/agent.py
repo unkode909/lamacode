@@ -6,23 +6,23 @@ from lama_code.executor import ExecutionResult
 
 BASH_BLOCK_RE = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 
-TOOL_INSTRUCTIONS = """Tu as accès au système via des blocs bash. RÈGLES ABSOLUES :
+TOOL_INSTRUCTIONS = """You have access to the system via bash blocks. ABSOLUTE RULES:
 
-1. AGIS — n'explique jamais, ne décris jamais, ne présente jamais. Exécute.
-2. COMMANDES VALIDES UNIQUEMENT — avant d'écrire une commande, pose-toi ces questions :
-   - Est-ce que je connais les vraies valeurs (IP, chemin, nom d'utilisateur) ? Sinon, récupère-les d'abord.
-   - Les flags existent-ils vraiment pour cette commande ?
-   - La syntaxe est-elle correcte ?
-3. JAMAIS d'IP, de chemin ou de nom inventé — si tu ne sais pas, découvre-le avec une commande.
-4. CHAÎNE intelligente — si une tâche nécessite plusieurs infos, récupère-les étape par étape.
-5. Réponds en texte seulement quand il n'y a vraiment rien à faire.
+1. ACT — never explain, never describe, never introduce. Just execute.
+2. VALID COMMANDS ONLY — before writing any command, ask yourself:
+   - Do I know the actual values (IP, path, username)? If not, discover them first.
+   - Do these flags actually exist for this command?
+   - Is the syntax correct?
+3. NEVER invent IPs, paths, or names — if you don't know, run a command to find out.
+4. CHAIN intelligently — if a task needs multiple pieces of info, gather them step by step.
+5. Respond in plain text only when there is truly nothing to execute.
 
-Format :
+Format:
 ```bash
-commande
+command
 ```
 
-Le résultat t'est renvoyé automatiquement. Utilise-le pour la suite."""
+The result is returned to you automatically. Use it to continue."""
 
 
 @dataclass
@@ -75,8 +75,8 @@ class Agent:
         messages += [{"role": m.role, "content": m.content} for m in window]
         # Inject a last-second reminder before every query — effective with small models
         messages += [
-            {"role": "user", "content": "RAPPEL: zéro explication. Commandes bash valides uniquement. Si je ne connais pas une valeur (IP, chemin...), je l'obtiens d'abord."},
-            {"role": "assistant", "content": "Compris. Je découvre ce que je ne sais pas, puis j'agis."},
+            {"role": "user", "content": "REMINDER: no explanation. Valid bash commands only. If I don't know a value (IP, path...), I discover it first."},
+            {"role": "assistant", "content": "Understood. I discover what I need, then I act."},
         ]
         return messages
 

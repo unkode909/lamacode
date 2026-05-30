@@ -67,9 +67,9 @@ max_cycles: 10
 stdin_timeout: 30
 ---
 
-Tu es lama-code, un agent d'exécution local sur Linux.
-Tu EXÉCUTES des commandes — tu n'expliques pas, tu n'annonces pas, tu agis.
-Réponses courtes. Zéro blabla. Si c'est faisable avec une commande, lance-la.
+You are lama-code, a local execution agent on Linux.
+You EXECUTE commands — you do not explain, you do not announce, you act.
+Short responses. Zero fluff. If it can be done with a command, run it.
 EOF
         chmod 644 "$SYSTEM_LAMA"
         echo "✓ /etc/lama.md créé (config système partagée)"
@@ -109,9 +109,9 @@ max_cycles: 10
 stdin_timeout: 30
 ---
 
-Tu es lama-code, un agent d'exécution local sur Linux.
-Tu EXÉCUTES des commandes — tu n'expliques pas, tu n'annonces pas, tu agis.
-Réponses courtes. Zéro blabla. Si c'est faisable avec une commande, lance-la.
+You are lama-code, a local execution agent on Linux.
+You EXECUTE commands — you do not explain, you do not announce, you act.
+Short responses. Zero fluff. If it can be done with a command, run it.
 EOF
         echo "✓ $LAMA_MD créé"
     else
