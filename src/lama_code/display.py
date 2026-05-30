@@ -74,6 +74,26 @@ def end_stream() -> None:
     print()
 
 
+def stream_stdout_line(line: str) -> None:
+    sys.stdout.write(line)
+    sys.stdout.flush()
+
+
+def stream_stderr_line(line: str) -> None:
+    console.print(f"[yellow]{line.rstrip()}[/yellow]")
+
+
+def show_stdin_waiting() -> None:
+    console.print("[dim]⌨  commande en attente d'entrée...[/dim]")
+
+
+def show_truncation(lines_shown: int, total_lines: int, filepath: str) -> None:
+    console.print(
+        f"[dim]... {total_lines - lines_shown} lignes supplémentaires "
+        f"dans {filepath}[/dim]"
+    )
+
+
 def show_block(command: str) -> None:
     console.print(
         Panel(command, title="[cyan]bash[/cyan]", border_style="cyan", expand=False)
@@ -89,6 +109,13 @@ def confirm() -> bool:
 
 
 def show_result(result: ExecutionResult) -> None:
+    if result.truncated:
+        show_truncation(
+            lines_shown=result.stdout.count("\n"),
+            total_lines=result.total_lines,
+            filepath=result.output_file,
+        )
+        return
     if result.success:
         if result.stdout:
             console.print(f"[green]✓[/green]  {result.stdout.rstrip()}")
