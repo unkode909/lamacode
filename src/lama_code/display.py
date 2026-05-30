@@ -18,7 +18,7 @@ class _Spinner:
 
     def start(self) -> None:
         self._stop.clear()
-        sys.stdout.write(f"\n{_PREFIX}")
+        sys.stdout.write("\n")
         sys.stdout.flush()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -26,7 +26,7 @@ class _Spinner:
     def _run(self) -> None:
         i = 0
         while not self._stop.is_set():
-            sys.stdout.write(f"\r{_PREFIX}{_SPINNER_CHARS[i % 4]}")
+            sys.stdout.write(f"\r{_SPINNER_CHARS[i % 4]}")
             sys.stdout.flush()
             time.sleep(0.1)
             i += 1
