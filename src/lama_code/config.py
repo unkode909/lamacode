@@ -26,7 +26,12 @@ def load_config(
     merged: dict = {}
     bodies: list[str] = []
 
+    seen: set = set()
     for path in [home_dir / ".lama.md", project_dir / ".lama.md"]:
+        resolved = path.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
         if path.exists():
             front, body = _parse(path)
             merged.update(front)

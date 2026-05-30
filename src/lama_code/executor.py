@@ -15,12 +15,20 @@ class ExecutionResult:
 
 
 def execute(command: str) -> ExecutionResult:
-    result = subprocess.run(
-        command, shell=True, capture_output=True, text=True, timeout=60
-    )
-    return ExecutionResult(
-        command=command,
-        stdout=result.stdout,
-        stderr=result.stderr,
-        exit_code=result.returncode,
-    )
+    try:
+        result = subprocess.run(
+            command, shell=True, capture_output=True, text=True, timeout=60
+        )
+        return ExecutionResult(
+            command=command,
+            stdout=result.stdout,
+            stderr=result.stderr,
+            exit_code=result.returncode,
+        )
+    except subprocess.TimeoutExpired:
+        return ExecutionResult(
+            command=command,
+            stdout="",
+            stderr="[timeout: 60s dépassé]",
+            exit_code=124,
+        )

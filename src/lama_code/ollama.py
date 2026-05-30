@@ -25,7 +25,7 @@ class OllamaClient:
         )
         try:
             resp = urllib.request.urlopen(req, timeout=30)
-        except urllib.error.URLError as e:
+        except (urllib.error.URLError, TimeoutError) as e:
             raise OllamaError(
                 f"Impossible de joindre Ollama sur {self.base_url}: {e}"
             ) from e
