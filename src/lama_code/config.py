@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 from pathlib import Path
 import yaml
@@ -32,14 +33,17 @@ def load_config(
             if body:
                 bodies.append(body)
 
-    cfg = Config(
-        model=merged.get("model", "phi4-mini"),
-        ollama_url=merged.get("ollama_url", "http://localhost:11434"),
-        context_window=int(merged.get("context_window", 25)),
-        yolo=bool(merged.get("yolo", False)),
-        max_cycles=int(merged.get("max_cycles", 10)),
-        system_prompt="\n\n".join(bodies),
-    )
+    overrides = {
+        k: merged[k]
+        for k in ("model", "ollama_url", "yolo")
+        if k in merged
+    }
+    if "context_window" in merged:
+        overrides["context_window"] = int(merged["context_window"])
+    if "max_cycles" in merged:
+        overrides["max_cycles"] = int(merged["max_cycles"])
+    overrides["system_prompt"] = "\n\n".join(bodies)
+    cfg = dataclasses.replace(Config(), **overrides)
 
     if yolo_override:
         cfg.yolo = True
@@ -51,7 +55,7 @@ def load_config(
 
 def _parse(path: Path) -> tuple[dict, str]:
     content = path.read_text(encoding="utf-8")
-    if content.startswith("---"):
+    if content.startswith("---\n"):
         parts = content.split("---", 2)
         if len(parts) >= 3:
             return yaml.safe_load(parts[1]) or {}, parts[2].strip()
