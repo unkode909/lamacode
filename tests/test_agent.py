@@ -98,7 +98,6 @@ def test_confirm_skips_block_when_denied():
 
     # confirm was called, execute was NOT called (block skipped)
     display.confirm.assert_called_once()
-    fake_execute_mock = MagicMock()  # just verifying execute_fn wasn't called via result content
     assert "[ignoré par l'utilisateur]" in agent.history[2].content
 
 

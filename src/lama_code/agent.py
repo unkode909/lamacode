@@ -114,7 +114,7 @@ class Agent:
             return stdin_blocks[0]
         return None
 
-    def _format_result(self, result) -> str:
+    def _format_result(self, result: ExecutionResult) -> str:
         if result.success:
             return f"$ {result.command}\n{result.stdout}"
         return f"$ {result.command}\n[exit {result.exit_code}]\n{result.stderr}"
