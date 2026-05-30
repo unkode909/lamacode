@@ -6,14 +6,20 @@ from lama_code.executor import ExecutionResult
 
 BASH_BLOCK_RE = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 
-TOOL_INSTRUCTIONS = """Pour interagir avec le système (fichiers, commandes), utilise des blocs bash :
+TOOL_INSTRUCTIONS = """Tu as accès au système via des blocs bash. RÈGLES STRICTES :
 
+1. AGIS immédiatement — n'explique JAMAIS ce que tu vas faire, fais-le.
+2. Pour toute action système : utilise un bloc bash, ne décris pas la commande.
+3. N'écris PAS de phrases comme "Je vais...", "Voici comment...", "Tu peux utiliser...".
+4. Si tu as besoin d'info système, exécute la commande et attends le résultat.
+5. Réponds en texte SEULEMENT quand il n'y a aucune action à faire.
+
+Format pour agir :
 ```bash
-commande ici
+commande
 ```
 
-Le résultat te sera renvoyé automatiquement. Tu peux enchaîner plusieurs blocs par réponse.
-Pour des réponses purement textuelles, écris sans blocs bash."""
+Le résultat t'est renvoyé automatiquement."""
 
 
 @dataclass
