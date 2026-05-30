@@ -35,7 +35,7 @@ class OllamaClient:
             url, data=payload, headers={"Content-Type": "application/json"}
         )
         try:
-            resp = urllib.request.urlopen(req, timeout=30)
+            resp = urllib.request.urlopen(req, timeout=120)
         except (urllib.error.URLError, TimeoutError) as e:
             raise OllamaError(
                 f"Impossible de joindre Ollama sur {self.base_url}: {e}"
