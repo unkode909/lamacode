@@ -83,7 +83,7 @@ def main() -> None:
 
     # Model + yolo menus — only in REPL mode and only if --model was not passed
     if not is_oneshot and args.model is None:
-        models = list_models(cfg.ollama_url)
+        models = list_models(cfg.ollama_url, cfg.ollama_api_key)
         if len(models) > 1:
             chosen = _display.select_model(models, cfg.model)
             if chosen != cfg.model:

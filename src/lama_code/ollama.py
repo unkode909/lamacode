@@ -10,15 +10,28 @@ class OllamaError(Exception):
     pass
 
 
-def list_models(base_url: str) -> list[str]:
+def list_models(base_url: str, api_key: str = "") -> list[str]:
     """Return sorted list of model names from local Ollama or cloud API."""
-    try:
-        url = f"{base_url.rstrip('/')}/api/tags"
-        with urllib.request.urlopen(url, timeout=3) as resp:
-            data = json.loads(resp.read())
-        return sorted(m["name"] for m in data.get("models", []))
-    except Exception:
-        return []
+    base = base_url.rstrip("/")
+    headers = {}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    # Try /api/tags (local Ollama)
+    for path in ("/api/tags", "/v1/models"):
+        try:
+            req = urllib.request.Request(f"{base}{path}", headers=headers)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read())
+            # Local format: {"models": [{"name": ...}]}
+            if "models" in data:
+                return sorted(m["name"] for m in data["models"])
+            # OpenAI format: {"data": [{"id": ...}]}
+            if "data" in data:
+                return sorted(m["id"] for m in data["data"])
+        except Exception:
+            continue
+    return []
 
 
 class OllamaClient:
