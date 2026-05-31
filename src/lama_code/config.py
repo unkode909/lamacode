@@ -59,6 +59,7 @@ class Config:
     system_prompt: str = ""
     stdin_timeout: float = 3.0
     max_output_lines: int = 200
+    ollama_api_key: str = ""
 
 
 def load_config(
@@ -92,7 +93,7 @@ def load_config(
 
     overrides = {
         k: merged[k]
-        for k in ("model", "ollama_url", "yolo")
+        for k in ("model", "ollama_url", "yolo", "ollama_api_key")
         if k in merged
     }
     if "context_window" in merged:

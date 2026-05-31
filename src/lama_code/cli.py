@@ -67,7 +67,7 @@ def _find_memory_file() -> Path:
 def main() -> None:
     args = parse_args()
     cfg = load_config(yolo_override=args.yolo, model_override=args.model)
-    ollama = OllamaClient(base_url=cfg.ollama_url, model=cfg.model)
+    ollama = OllamaClient(base_url=cfg.ollama_url, model=cfg.model, api_key=cfg.ollama_api_key)
     agent = Agent(
         cfg=cfg, ollama=ollama, display=_display,
         execute_fn=functools.partial(

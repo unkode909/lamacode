@@ -21,9 +21,10 @@ def list_models(base_url: str) -> list[str]:
 
 
 class OllamaClient:
-    def __init__(self, base_url: str, model: str):
+    def __init__(self, base_url: str, model: str, api_key: str = ""):
         self.base_url = base_url.rstrip("/")
         self.model = model
+        self.api_key = api_key
 
     # Special prefix used to distinguish thinking tokens from content tokens
     THINK_PREFIX = "\x00think\x00"
@@ -50,10 +51,10 @@ class OllamaClient:
             conn = http.client.HTTPConnection(
                 parsed.hostname, parsed.port or 80, timeout=10
             )
-            conn.request(
-                "POST", parsed.path, body=payload,
-                headers={"Content-Type": "application/json"},
-            )
+            headers = {"Content-Type": "application/json"}
+            if self.api_key:
+                headers["Authorization"] = f"Bearer {self.api_key}"
+            conn.request("POST", parsed.path, body=payload, headers=headers)
             # Remove timeout before getresponse() — model loading can take >10s
             # TCP resets naturally if Ollama crashes mid-generation
             conn.sock.settimeout(None)
